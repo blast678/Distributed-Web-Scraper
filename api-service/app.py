@@ -1,45 +1,53 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from kafka import KafkaProducer
-import json
+import logging
 import os
-import time
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, Request
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+from routes.scrape import router as scrape_router
+from kafka_producer import get_producer
 
-app = FastAPI(title="Distributed Scraper API")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
-KAFKA_BROKER = os.getenv("KAFKA_BROKER", "kafka:29092")
+KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:9092")
 
-# --- THE FIX: Infinite Retry Loop for API ---
-producer = None
-print("Attempting to connect to Kafka...")
-attempt = 1
+limiter = Limiter(key_func=get_remote_address)
 
-while True:
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: connect Kafka producer
     try:
-        producer = KafkaProducer(
-            bootstrap_servers=[KAFKA_BROKER],
-            value_serializer=lambda v: json.dumps(v).encode('utf-8')
-        )
-        print(f"✅ Successfully connected to Kafka at {KAFKA_BROKER} on attempt {attempt}")
-        break # Exit the loop if connection is successful
+        app.state.producer = get_producer(KAFKA_BOOTSTRAP)
+        logger.info("[+] Kafka producer connected")
     except Exception as e:
-        print(f"⏳ Kafka not ready yet. Retrying in 5 seconds... (Attempt {attempt} - {e})")
-        time.sleep(5)
-        attempt += 1
+        logger.warning(f"[-] Kafka not available at startup: {e}")
+        app.state.producer = None
+    yield
+    # Shutdown: flush & close
+    if app.state.producer:
+        app.state.producer.flush()
+        app.state.producer.close()
+        logger.info("[+] Kafka producer closed")
 
-# ---------------------------------
+app = FastAPI(title="Distributed Web Scraper API", version="1.0.0", lifespan=lifespan)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-class URLRequest(BaseModel):
-    url: str
+# Apply rate limiting globally via middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    logger.info(f"Incoming: {request.method} {request.url}")
+    response = await call_next(request)
+    logger.info(f"Response: {response.status_code}")
+    return response
 
-@app.post("/scrape")
-async def submit_url(request: URLRequest):
-    if not producer:
-        raise HTTPException(status_code=503, detail="API is not connected to Kafka queue")
-        
-    try:
-        producer.send('urls-to-scrape', {'url': request.url})
-        producer.flush()
-        return {"status": "success", "message": f"Added {request.url} to queue"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+app.include_router(scrape_router)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=False)
