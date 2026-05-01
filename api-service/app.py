@@ -6,7 +6,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from routes.scrape import router as scrape_router
-from kafka_producer import get_producer
+from kafka_producer import ensure_topic_exists, get_producer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -22,6 +22,7 @@ limiter = Limiter(key_func=get_remote_address)
 async def lifespan(app: FastAPI):
     # Startup: connect Kafka producer
     try:
+        ensure_topic_exists(KAFKA_BOOTSTRAP)
         app.state.producer = get_producer(KAFKA_BOOTSTRAP)
         logger.info("[+] Kafka producer connected")
     except Exception as e:

@@ -39,6 +39,8 @@ services:
       - "8000:8000"
     depends_on:
       - kafka
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
 
   scraper-worker:
     build:
@@ -46,6 +48,8 @@ services:
     depends_on:
       - kafka
       - postgres
+    environment:
+      KAFKA_BROKER: "kafka:29092"
 
   # --- NEW PHASE 2 ADDITION: JENKINS ROBOT ---
   jenkins:
