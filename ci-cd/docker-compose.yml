@@ -33,8 +33,7 @@ services:
       - "5432:5432"
 
   api-service:
-    build: 
-      context: ../api-service
+    image: mithilesh321/scraper-api:latest
     ports:
       - "8000:8000"
     depends_on:
@@ -43,8 +42,7 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
 
   scraper-worker:
-    build:
-      context: ../scraper-worker
+    image: mithilesh321/scraper-worker:latest
     depends_on:
       - kafka
       - postgres
@@ -65,7 +63,14 @@ services:
       - jenkins_data:/var/jenkins_home
       # This is the magic pipeline that lets Jenkins talk to your laptop's Docker!
       - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - default      # Keeps it connected to your Kafka/Postgres
+      - minikube
 
 # We must declare the volume at the bottom so Jenkins doesn't lose its memory
 volumes:
   jenkins_data:
+networks:
+  default:
+  minikube:
+    external: true

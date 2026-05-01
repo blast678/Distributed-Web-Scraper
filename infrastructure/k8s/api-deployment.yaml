@@ -14,9 +14,12 @@ spec:
     spec:
       containers:
       - name: api-container
-        image: yourdockerhubusername/scraper-api:latest
+        image: mithilesh321/scraper-api:latest
         ports:
         - containerPort: 8000
+        env:
+        - name: KAFKA_BROKER
+          value: "kafka-service:9092"
 ---
 apiVersion: v1
 kind: Service
