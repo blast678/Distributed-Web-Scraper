@@ -1,0 +1,58 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Virtual environments and local Python tooling
+.venv/
+venv/
+env/
+ENV/
+pip-wheel-metadata/
+
+# Local environment files and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Logs and runtime output
+*.log
+logs/
+*.out
+*.pid
+
+# Docker Compose local overrides
+docker-compose.override.yml
+compose.override.yml
+
+# Generated demo/test output
+LIVE_EXAMPLE_OUTPUT.md
+demo_example_output.md
+test-output/
+reports/
+
+# Local scratch files accidentally created from shell commands
+/anywhere
+/from
+/instantly
+
+# Editor and OS files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Windows/WSL interop metadata
+*:Zone.Identifier

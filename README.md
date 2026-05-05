@@ -1,36 +1,74 @@
 # Distributed Web Scraper
 
-This project runs a small Kafka-based scraping pipeline:
+A Docker-based distributed web scraping system built with FastAPI, Kafka, PostgreSQL, and a Python worker.
 
-- `api-service` accepts URLs and sends them to Kafka.
-- `scraper-worker` consumes URLs from Kafka and processes them.
-- `kafka`, `zookeeper`, `postgres`, and `jenkins` are started through Docker Compose.
+The API accepts URLs, publishes scrape jobs to Kafka, and serves a simple web UI. The worker consumes jobs from Kafka, extracts article metadata/content with BeautifulSoup, and stores the results in PostgreSQL for search, tags, detail views, and analytics.
+
+## Tech Stack
+
+- FastAPI and Uvicorn for the API service
+- Apache Kafka and Zookeeper for the scrape queue
+- Python worker with Requests and BeautifulSoup4 for scraping
+- PostgreSQL for storing scraped articles and generated tags
+- Docker Compose for local WSL execution
+- Jenkins and Kubernetes manifests for DevOps workflow support
+
+## Project Structure
+
+```text
+.
+|-- api-service/          # FastAPI app, Kafka producer, routes, static UI
+|-- scraper-worker/       # Kafka consumer and scraping/aggregation logic
+|-- ci-cd/                # Docker Compose and Jenkins Dockerfile
+|-- infrastructure/       # Kubernetes manifests and setup notes
+|-- docs/                 # Project report and architecture diagram
+|-- Jenkinsfile           # Jenkins pipeline
+`-- README.md
+```
+
+## Prerequisites
+
+Install or enable these before running:
+
+- WSL 2
+- Docker Desktop
+- Docker Desktop WSL integration
+- Docker Compose v2
+
+Check Docker from WSL:
+
+```bash
+docker --version
+docker compose version
+```
 
 ## Run In WSL
 
-These steps were verified in WSL with Docker Compose v2.
-
-### 1. Open WSL and go to the compose folder
+### 1. Open WSL
 
 ```bash
-cd /Distributed-Web-Scraper/ci-cd
+wsl
 ```
 
-### 2. Start the stack
+### 2. Go to the Docker Compose folder
 
-Use `docker compose` rather than the older `docker-compose` binary:
+If the project is stored on your Windows `D:` drive, WSL usually exposes it at `/mnt/d`:
+
+```bash
+cd /mnt/d/SPIT_sem_6/DEVOPS/Devops_project/Distributed-Web-Scraper/ci-cd
+```
+
+If you cloned the project directly inside WSL, use your own project path and then enter `ci-cd`.
+
+### 3. Build and start the stack
+
+Use Docker Compose v2:
 
 ```bash
 docker compose up -d --build
 ```
 
-### 3. Check the services
-
-```bash
-docker compose ps
-```
-
-Expected services:
+This starts:
 
 - `zookeeper`
 - `kafka`
@@ -39,7 +77,77 @@ Expected services:
 - `scraper-worker`
 - `jenkins`
 
-### 4. Verify the API
+### 4. Check running containers
+
+```bash
+docker compose ps
+```
+
+### 5. Verify the API
+
+```bash
+curl -sS http://localhost:8000/health
+```
+
+Expected response:
+
+```json
+{"status":"ok"}
+```
+
+### 6. Open the web UI
+
+Open this in your Windows browser:
+
+```text
+http://localhost:8000
+```
+
+Jenkins is available at:
+
+```text
+http://localhost:8080
+```
+
+## Sample Inputs
+
+Queue a URL for scraping:
+
+```bash
+curl -sS -X POST http://localhost:8000/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://example.com"}'
+```
+
+More sample URLs:
+
+```bash
+curl -sS -X POST http://localhost:8000/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://en.wikipedia.org/wiki/Web_scraping"}'
+```
+
+```bash
+curl -sS -X POST http://localhost:8000/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://en.wikipedia.org/wiki/Apache_Kafka"}'
+```
+
+```bash
+curl -sS -X POST http://localhost:8000/scrape \
+  -H "Content-Type: application/json" \
+  -d '{"url":"https://docs.python.org/3/tutorial/"}'
+```
+
+The API should respond with:
+
+```json
+{"status":"queued","url":"https://example.com/"}
+```
+
+Wait a few seconds for the worker to process the queued URL, then search the stored articles.
+
+## Useful API Endpoints
 
 Health check:
 
@@ -47,48 +155,125 @@ Health check:
 curl -sS http://localhost:8000/health
 ```
 
-Queue a test URL:
+Get recent articles:
 
 ```bash
-curl -sS -X POST http://localhost:8000/scrape \
-	-H "Content-Type: application/json" \
-	-d '{"url":"https://example.com"}'
+curl -sS "http://localhost:8000/articles/search"
 ```
 
-You should get a response like:
+Search articles:
 
-```json
-{"status":"queued","url":"https://example.com/"}
+```bash
+curl -sS "http://localhost:8000/articles/search?q=python"
 ```
 
-### 5. Check Kafka topics
+Get tags:
 
-The API bootstraps the Kafka topic automatically.
+```bash
+curl -sS "http://localhost:8000/articles/tags"
+```
+
+Get articles by tag:
+
+```bash
+curl -sS "http://localhost:8000/articles/tag/python"
+```
+
+Get analytics:
+
+```bash
+curl -sS "http://localhost:8000/analytics"
+```
+
+Get article details:
+
+```bash
+curl -sS "http://localhost:8000/articles/1"
+```
+
+## Kafka Checks
+
+The API creates the Kafka topic automatically during startup.
+
+List Kafka topics:
 
 ```bash
 docker compose exec -T kafka kafka-topics --bootstrap-server kafka:29092 --list
 ```
 
-You should see:
+Expected topic:
 
-- `urls-to-scrape`
+```text
+urls-to-scrape
+```
 
-### 6. View logs
+## View Logs
+
+API logs:
 
 ```bash
 docker compose logs -f api-service
+```
+
+Worker logs:
+
+```bash
 docker compose logs -f scraper-worker
+```
+
+Kafka logs:
+
+```bash
 docker compose logs -f kafka
 ```
 
-### 7. Stop the stack
+PostgreSQL logs:
+
+```bash
+docker compose logs -f postgres
+```
+
+## Stop The Project
+
+Stop containers but keep volumes:
 
 ```bash
 docker compose down
 ```
 
+Stop containers and remove volumes, including PostgreSQL and Jenkins data:
+
+```bash
+docker compose down -v
+```
+
+## Troubleshooting
+
+If `localhost:8000` does not respond, check container status:
+
+```bash
+docker compose ps
+```
+
+If Kafka or the worker is still starting, watch logs:
+
+```bash
+docker compose logs -f kafka scraper-worker api-service
+```
+
+If old containers were created with the legacy `docker-compose` command, remove the old stack and rebuild:
+
+```bash
+docker compose down
+docker compose up -d --build
+```
+
+If Docker is unavailable inside WSL, open Docker Desktop and confirm WSL integration is enabled for your distro.
+
 ## Notes
 
-- If you see a warning about `version` in `docker-compose.yml`, it is safe to ignore; Compose v2 simply treats it as obsolete.
-- If containers were created with the older `docker-compose` binary and you hit stale-image errors, remove the old project containers and rerun with `docker compose up -d --build`.
+- Use `docker compose`, not the older `docker-compose` binary.
+- A warning about the `version` field in `docker-compose.yml` is harmless with Compose v2.
+- The local API runs on `http://localhost:8000`.
 - Jenkins runs on `http://localhost:8080`.
+- PostgreSQL data persists in Docker volumes until you run `docker compose down -v`.
