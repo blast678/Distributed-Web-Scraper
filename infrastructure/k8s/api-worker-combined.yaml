@@ -1,0 +1,72 @@
+# infrastructure/k8s/api-worker-combined.yaml
+
+# 1. THE DOORBELL (Fixed to point to scraper-combined)
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: scraper-combined # <-- The crucial fix
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8000
+---
+# 2. THE APARTMENT (API and Worker living together)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-worker-combined
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: scraper-combined
+  template:
+    metadata:
+      labels:
+        app: scraper-combined
+    spec:
+      containers:
+      # THE BRAIN: API
+      - name: api-container
+        image: mithilesh321/scraper-api:latest
+        resources:
+          requests:
+            memory: "128Mi"
+          limits:
+            memory: "256Mi"
+        env:
+        # FIX: Using DNS instead of IP
+        - name: KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka-service:9092" 
+        ports:
+        - containerPort: 8000
+
+      # THE MUSCLE: Worker
+      - name: worker-container
+        image: mithilesh321/scraper-worker:latest
+        resources:
+          requests:
+            memory: "128Mi"
+          limits:
+            memory: "256Mi"
+        env:
+        # FIX: Using DNS instead of IP
+        - name: KAFKA_BROKER
+          value: "kafka-service:9092"
+        - name: POSTGRES_HOST
+          value: "postgres-service"
+        - name: POSTGRES_DB
+          value: "scraper_db"
+        - name: POSTGRES_USER
+          value: "scraper_user"
+        - name: POSTGRES_PASSWORD
+          value: "scraper_password"
+        - name: SCRAPERAPI_KEY
+          valueFrom:
+            secretKeyRef:
+              name: proxy-creds
+              key: api_key

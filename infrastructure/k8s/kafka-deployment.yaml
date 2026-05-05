@@ -1,3 +1,4 @@
+# infrastructure/k8s/kafka-deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -13,31 +14,43 @@ spec:
         app: kafka
     spec:
       containers:
-      # 1. Zookeeper (The Manager)
       - name: zookeeper
         image: confluentinc/cp-zookeeper:7.4.0
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
         ports:
         - containerPort: 2181
         env:
+        - name: KAFKA_OPTS
+          value: "-Xmx128M -Xms128M"
         - name: ZOOKEEPER_CLIENT_PORT
           value: "2181"
         - name: ZOOKEEPER_TICK_TIME
           value: "2000"
-          
-      # 2. Kafka (The Message Queue)
       - name: kafka
         image: confluentinc/cp-kafka:7.4.0
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "400Mi"
         ports:
         - containerPort: 9092
         env:
+        - name: KAFKA_HEAP_OPTS
+          value: "-Xmx256M -Xms256M"
         - name: KAFKA_BROKER_ID
           value: "1"
-        # Connects to Zookeeper in the exact same pod
         - name: KAFKA_ZOOKEEPER_CONNECT
           value: "localhost:2181"
-        # THIS IS CRITICAL: It tells Kafka to answer to "kafka-service:9092"
+        # FIX: Revert back to the stable DNS name instead of the hardcoded IP
         - name: KAFKA_ADVERTISED_LISTENERS
-          value: "PLAINTEXT://kafka-service:9092"
+          value: "PLAINTEXT://kafka-service:9092" 
         - name: KAFKA_LISTENER_SECURITY_PROTOCOL_MAP
           value: "PLAINTEXT:PLAINTEXT"
         - name: KAFKA_INTER_BROKER_LISTENER_NAME

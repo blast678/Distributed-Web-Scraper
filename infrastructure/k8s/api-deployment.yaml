@@ -3,24 +3,30 @@ kind: Deployment
 metadata:
   name: api-deployment
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: scraper-api
+      app: scraper-combined
   template:
     metadata:
       labels:
-        app: scraper-api
+        app: scraper-combined
     spec:
       containers:
       - name: api-container
         image: mithilesh321/scraper-api:latest
+        resources: # <-- ADD THIS: Keeps the pod from eating all node RAM
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
         ports:
         - containerPort: 8000
         env:
         # FIXED: Changed from KAFKA_BROKER to KAFKA_BOOTSTRAP_SERVERS
         - name: KAFKA_BOOTSTRAP_SERVERS
-          value: "kafka-service:9092"
+          value: "192.168.69.175:9092"
 ---
 apiVersion: v1
 kind: Service

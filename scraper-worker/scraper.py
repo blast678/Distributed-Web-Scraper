@@ -12,46 +12,32 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # Grab the proxy key injected by Kubernetes
 SCRAPERAPI_KEY = os.getenv("SCRAPERAPI_KEY")
 
+# Path: scraper-worker/scraper.py
 def scrape_url(url):
-    print(f"[ ] Visiting: {url}")
     try:
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-        proxies = None
-        
-        # Configure the Rotating Proxy
-        if SCRAPERAPI_KEY:
-            proxy_url = f"http://scraperapi:{SCRAPERAPI_KEY}@proxy-server.scraperapi.com:8001"
-            proxies = {
-                "http": proxy_url,
-                "https": proxy_url
-            }
-            print("[ ] Routing traffic through ScraperAPI Rotating Proxy...")
-
-        # IMPORTANT: verify=False is required when using this proxy
+        # ... keep your existing ScraperAPI proxy code here ...
         response = requests.get(url, headers=headers, proxies=proxies, verify=False, timeout=20)
         
         if response.status_code != 200:
-            print(f"[ ] Failed to reach {url} - Status: {response.status_code}")
             return None
-            
-        soup = BeautifulSoup(response.text, "html.parser")
-        title = soup.title.string if soup.title else "No title found"
-        paragraphs = soup.find_all("p")
-        text_content = " ".join([p.get_text() for p in paragraphs])
-        
-        result = {
-            "url": url,
-            "title": title,
-            "content": text_content[:2000], # Keep it to 2000 chars for the DB
-            "scraped_at": datetime.now().isoformat()
-        }
-        print(f"[ ] Successfully scraped: {title}")
-        return result
-        
-    except Exception as e:
-        print(f"[ ] Error scraping {url}: {e}")
-        return None
 
+        # Fix: Detect if the response is JSON or HTML
+        if 'application/json' in response.headers.get('Content-Type', ''):
+            text_content = response.text 
+            title = "JSON API Response"
+        else:
+            soup = BeautifulSoup(response.text, "html.parser")
+            title = soup.title.string if soup.title else "No title found"
+            # Fallback: if no <p> tags, grab all visible text on the page
+            text_content = soup.get_text(separator=' ', strip=True)
+
+        return {
+            "url": url, "title": title, "content": text_content[:2000], "scraped_at": datetime.now().isoformat()
+        }
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
 def save_to_db(data):
     try:
         conn = psycopg2.connect(
