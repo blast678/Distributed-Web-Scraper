@@ -49,7 +49,7 @@ pipeline {
                         // 1. Deploy the Core Infrastructure (Kafka & Zookeeper) FIRST
                         sh "kubectl apply -f infrastructure/k8s/kafka-deployment.yaml --kubeconfig=\$KUBECONFIG"
                         sh "kubectl apply -f infrastructure/k8s/service.yaml --kubeconfig=\$KUBECONFIG"
-                        
+                        sh "kubectl apply -f infrastructure/k8s/postgres.yaml --kubeconfig=\$KUBECONFIG" // <-- NEW LINE
                         // 2. Deploy your Custom Code (API & Workers)
                         sh "kubectl apply -f infrastructure/k8s/api-deployment.yaml --kubeconfig=\$KUBECONFIG"
                         sh "kubectl apply -f infrastructure/k8s/worker-deployment.yaml --kubeconfig=\$KUBECONFIG"

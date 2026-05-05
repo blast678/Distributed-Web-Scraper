@@ -18,7 +18,8 @@ spec:
         ports:
         - containerPort: 8000
         env:
-        - name: KAFKA_BROKER
+        # FIXED: Changed from KAFKA_BROKER to KAFKA_BOOTSTRAP_SERVERS
+        - name: KAFKA_BOOTSTRAP_SERVERS
           value: "kafka-service:9092"
 ---
 apiVersion: v1
