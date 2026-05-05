@@ -33,21 +33,33 @@ services:
       - "5432:5432"
 
   api-service:
-    image: mithilesh321/scraper-api:latest
+    build:
+      context: ../api-service
     ports:
       - "8000:8000"
     depends_on:
       - kafka
     environment:
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+      POSTGRES_HOST: "postgres"
+      POSTGRES_DB: "scraper_db"
+      POSTGRES_USER: "scraper_user"
+      POSTGRES_PASSWORD: "scraper_password"
 
   scraper-worker:
-    image: mithilesh321/scraper-worker:latest
+    build:
+      context: ../scraper-worker
+      dockerfile: Dockerfile
     depends_on:
       - kafka
       - postgres
     environment:
       KAFKA_BROKER: "kafka:29092"
+      # Postgres connection for local compose (service name is 'postgres')
+      POSTGRES_HOST: "postgres"
+      POSTGRES_DB: "scraper_db"
+      POSTGRES_USER: "scraper_user"
+      POSTGRES_PASSWORD: "scraper_password"
 
   # --- NEW PHASE 2 ADDITION: JENKINS ROBOT ---
   jenkins:
@@ -63,14 +75,7 @@ services:
       - jenkins_data:/var/jenkins_home
       # This is the magic pipeline that lets Jenkins talk to your laptop's Docker!
       - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - default      # Keeps it connected to your Kafka/Postgres
-      - minikube
 
 # We must declare the volume at the bottom so Jenkins doesn't lose its memory
 volumes:
   jenkins_data:
-networks:
-  default:
-  minikube:
-    external: true

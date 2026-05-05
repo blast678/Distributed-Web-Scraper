@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Library - Web Aggregator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+        
+        .search-bar {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .search-bar input {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        
+        .search-bar button {
+            padding: 10px 20px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .main-container {
+            display: flex;
+            max-width: 1400px;
+            margin: 0 auto;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            height: fit-content;
+            position: sticky;
+            top: 100px;
+        }
+        
+        .sidebar h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .tag-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .tag {
+            padding: 8px 12px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .tag:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .content {
+            flex: 1;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab-button {
+            padding: 12px 24px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .tab-button.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .add-url-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .add-url-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .form-group input {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1em;
+        }
+        
+        .form-group button {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        .form-group button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .article-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .article-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .article-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .card-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+        
+        .card-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .card-content {
+            padding: 15px;
+        }
+        
+        .card-content h3 {
+            color: #333;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        
+        .card-content p {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85em;
+            color: #999;
+            margin-top: 10px;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 10px;
+        }
+        
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .stat-card h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .stat-list {
+            list-style: none;
+        }
+        
+        .stat-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+        }
+        
+        .stat-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .status {
+            padding: 10px 15px;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        /* MODAL STYLES */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            max-width: 900px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5em;
+            cursor: pointer;
+            color: #666;
+            z-index: 10;
+        }
+        
+        .detail-header {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            padding: 40px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .detail-image {
+            width: 100%;
+            height: 250px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .detail-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .detail-info h1 {
+            color: #333;
+            margin-bottom: 10px;
+            line-height: 1.3;
+        }
+        
+        .detail-info p {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        
+        .detail-meta {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .visit-link {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: all 0.3s;
+            word-break: break-all;
+        }
+        
+        .visit-link:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+        
+        .tech-stack {
+            padding: 30px 40px;
+            background: #f9f9f9;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .tech-stack h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .tech-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .tech-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+        
+        .detail-sections {
+            padding: 30px 40px;
+        }
+        
+        .detail-section {
+            margin-bottom: 30px;
+        }
+        
+        .detail-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+        
+        .detail-section p {
+            color: #666;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+        
+        .links-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .links-list li {
+            padding: 12px;
+            background: #f5f5f5;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .links-list a {
+            color: #667eea;
+            text-decoration: none;
+            word-break: break-all;
+        }
+        
+        .links-list a:hover {
+            text-decoration: underline;
+        }
+        
+        .key-points-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .key-points-list li {
+            padding: 12px;
+            background: #f0f7ff;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .keywords-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .keywords-cloud span {
+            display: inline-block;
+            padding: 8px 15px;
+            background: #f0f0f0;
+            border-radius: 20px;
+            font-size: 0.9em;
+            color: #667eea;
+            font-weight: 500;
+        }
+        
+        .tags-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .tags-list .tag {
+            padding: 8px 15px;
+            background: #667eea;
+            color: white;
+            border-radius: 20px;
+            font-size: 0.85em;
+            cursor: default;
+            border: 2px solid #667eea;
+        }
+        
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                position: relative;
+                top: 0;
+            }
+            
+            .detail-header {
+                grid-template-columns: 1fr;
+            }
+            
+            .article-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📚 Content Library</h1>
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search articles by title, content, or keywords...">
+            <button onclick="searchArticles()">Search</button>
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <div class="sidebar">
+            <h3>🏷️ Popular Tags</h3>
+            <div class="tag-cloud" id="tagCloud"></div>
+        </div>
+        
+        <div class="content">
+            <div class="tabs">
+                <button class="tab-button active" onclick="switchTab('library')">📚 Library</button>
+                <button class="tab-button" onclick="switchTab('add')">➕ Add URL</button>
+                <button class="tab-button" onclick="switchTab('analytics')">📊 Analytics</button>
+            </div>
+            
+            <!-- Library Tab -->
+            <div id="library" class="tab-content active">
+                <div class="article-grid" id="articleGrid"></div>
+                <div id="noArticles" style="text-align: center; padding: 40px; color: #999;">
+                    No articles found. Add a URL to get started!
+                </div>
+            </div>
+            
+            <!-- Add URL Tab -->
+            <div id="add" class="tab-content">
+                <div class="add-url-section">
+                    <h2>Add a Website to Scrape</h2>
+                    <div class="form-group">
+                        <input type="url" id="urlInput" placeholder="Enter website URL (e.g., https://example.com)">
+                        <button onclick="submitUrl()">Scrape & Analyze</button>
+                    </div>
+                    <div class="status" id="status"></div>
+                </div>
+            </div>
+            
+            <!-- Analytics Tab -->
+            <div id="analytics" class="tab-content">
+                <div class="analytics-grid">
+                    <div class="stat-card">
+                        <h3>📈 Total Articles</h3>
+                        <div style="font-size: 2em; color: #667eea; font-weight: bold;" id="totalArticles">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>🌐 Top Domains</h3>
+                        <ul class="stat-list" id="topDomains"></ul>
+                    </div>
+                    <div class="stat-card">
+                        <h3>👀 Most Viewed</h3>
+                        <ul class="stat-list" id="mostViewed"></ul>
+                    </div>
+                    <div class="stat-card">
+                        <h3>🏆 Top Tags</h3>
+                        <ul class="stat-list" id="topTags"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- DETAIL VIEW MODAL -->
+    <div class="modal" id="detailModal" style="display: none;">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeDetailModal()">&times;</button>
+            
+            <div class="detail-header">
+                <div class="detail-image">
+                    <img id="modalImage" src="" alt="Article preview" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22250%22%3E%3Crect fill=%22%23667eea%22 width=%22300%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22 fill=%22white%22 font-size=%2220%22%3ENo Image%3C/text%3E%3C/svg%3E'">
+                </div>
+                <div class="detail-info">
+                    <h1 id="modalTitle"></h1>
+                    <p id="modalDescription"></p>
+                    <div class="detail-meta">
+                        <span style="color: #999;"><strong>Domain:</strong> <span id="modalDomain"></span></span>
+                        <span style="color: #999;"><strong>Views:</strong> <span id="modalViews"></span></span>
+                        <span style="color: #999;"><strong>Saved:</strong> <span id="modalDate"></span></span>
+                    </div>
+                    <a class="visit-link" id="modalUrl" href="" target="_blank">Visit Original Website →</a>
+                </div>
+            </div>
+            
+            <!-- Tech Stack Visualization -->
+            <div class="tech-stack">
+                <h3>🚀 Technology Stack Used</h3>
+                <div class="tech-badges">
+                    <div class="tech-badge">Apache Kafka</div>
+                    <div class="tech-badge">PostgreSQL 13</div>
+                    <div class="tech-badge">FastAPI</div>
+                    <div class="tech-badge">BeautifulSoup4</div>
+                    <div class="tech-badge">Python 3.10</div>
+                    <div class="tech-badge">Docker</div>
+                    <div class="tech-badge">Kubernetes</div>
+                    <div class="tech-badge">HTML5/CSS3</div>
+                    <div class="tech-badge">JavaScript</div>
+                    <div class="tech-badge">Uvicorn</div>
+                    <div class="tech-badge">Zookeeper</div>
+                    <div class="tech-badge">psycopg2</div>
+                </div>
+            </div>
+            
+            <div class="detail-sections">
+                <!-- Full Text Section -->
+                <div class="detail-section" id="textSection" style="display: none;">
+                    <h3>📄 Full Content</h3>
+                    <p id="modalFullText"></p>
+                </div>
+                
+                <!-- Key Points Section -->
+                <div class="detail-section" id="keyPointsSection" style="display: none;">
+                    <h3>🎯 Key Points</h3>
+                    <ul class="key-points-list" id="modalKeyPoints"></ul>
+                </div>
+                
+                <!-- Images Section -->
+                <div class="detail-section" id="imagesSection" style="display: none;">
+                    <h3>🖼️ Images Found</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;" id="modalImages"></div>
+                </div>
+                
+                <!-- Links Section -->
+                <div class="detail-section" id="linksSection" style="display: none;">
+                    <h3>🔗 Links Found</h3>
+                    <ul class="links-list" id="modalLinks"></ul>
+                </div>
+                
+                <!-- Keywords Section -->
+                <div class="detail-section" id="keywordsSection" style="display: none;">
+                    <h3>🏷️ Keywords Extracted</h3>
+                    <div class="keywords-cloud" id="modalKeywords"></div>
+                </div>
+                
+                <!-- Tags Section -->
+                <div class="detail-section" id="tagsSection" style="display: none;">
+                    <h3>📌 Auto-Generated Tags</h3>
+                    <div class="tags-list" id="modalTags"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let autoRefresh = false;
+        let refreshInterval;
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadArticles();
+            loadTags();
+            loadAnalytics();
+            
+            // Allow Enter key to submit URL
+            document.getElementById('urlInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') submitUrl();
+            });
+            
+            // Allow Enter key to search
+            document.getElementById('searchInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') searchArticles();
+            });
+        });
+        
+        function switchTab(tab) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Refresh analytics when switching to that tab
+            if (tab === 'analytics') {
+                loadAnalytics();
+            }
+        }
+        
+        function submitUrl() {
+            const url = document.getElementById('urlInput').value.trim();
+            const status = document.getElementById('status');
+            
+            if (!url) {
+                status.textContent = '❌ Please enter a valid URL';
+                status.classList.add('status-error');
+                status.style.display = 'block';
+                return;
+            }
+            
+            fetch('http://localhost:8000/scrape', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: url })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.status === 'queued') {
+                    status.textContent = '✅ URL queued - Processing...';
+                    status.classList.remove('status-error');
+                    status.style.display = 'block';
+                    document.getElementById('urlInput').value = '';
+                    
+                    // Wait and reload
+                    setTimeout(() => {
+                        loadArticles();
+                        loadTags();
+                    }, 3000);
+                } else {
+                    status.textContent = '❌ Failed to queue URL';
+                    status.classList.add('status-error');
+                    status.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                status.textContent = '❌ Error: ' + err.message;
+                status.classList.add('status-error');
+                status.style.display = 'block';
+            });
+        }
+        
+        function loadArticles() {
+            fetch('http://localhost:8000/articles/search')
+                .then(res => res.json())
+                .then(data => {
+                    const grid = document.getElementById('articleGrid');
+                    const noArticles = document.getElementById('noArticles');
+                    
+                    if (data.results && data.results.length > 0) {
+                        grid.innerHTML = data.results.map(article => `
+                            <div class="article-card" onclick="openDetailModal(${article.id})">
+                                <div class="card-image">
+                                    <img src="${article.images ? JSON.parse(article.images)[0] : ''}" 
+                                         alt="${article.title}"
+                                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22280%22 height=%22200%22%3E%3Crect fill=%22%23667eea%22 width=%22280%22 height=%22200%22/%3E%3C/svg%3E'">
+                                </div>
+                                <div class="card-content">
+                                    <h3>${article.title}</h3>
+                                    <p>${article.description || article.full_text.substring(0, 100)}</p>
+                                    <div class="card-meta">
+                                        <span>${article.domain}</span>
+                                        <span>👁️ ${article.view_count} views</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                        noArticles.style.display = 'none';
+                    } else {
+                        grid.innerHTML = '';
+                        noArticles.style.display = 'block';
+                    }
+                });
+        }
+        
+        function searchArticles() {
+            const query = document.getElementById('searchInput').value.trim();
+            
+            if (!query) {
+                loadArticles();
+                return;
+            }
+            
+            fetch(`http://localhost:8000/articles/search?q=${encodeURIComponent(query)}`)
+                .then(res => res.json())
+                .then(data => {
+                    const grid = document.getElementById('articleGrid');
+                    const noArticles = document.getElementById('noArticles');
+                    
+                    if (data.results && data.results.length > 0) {
+                        grid.innerHTML = data.results.map(article => `
+                            <div class="article-card" onclick="openDetailModal(${article.id})">
+                                <div class="card-image">
+                                    <img src="${article.images ? JSON.parse(article.images)[0] : ''}" 
+                                         alt="${article.title}"
+                                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22280%22 height=%22200%22%3E%3Crect fill=%22%23667eea%22 width=%22280%22 height=%22200%22/%3E%3C/svg%3E'">
+                                </div>
+                                <div class="card-content">
+                                    <h3>${article.title}</h3>
+                                    <p>${article.description || article.full_text.substring(0, 100)}</p>
+                                    <div class="card-meta">
+                                        <span>${article.domain}</span>
+                                        <span>👁️ ${article.view_count} views</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                        noArticles.style.display = 'none';
+                    } else {
+                        grid.innerHTML = '';
+                        noArticles.textContent = 'No articles found for your search.';
+                        noArticles.style.display = 'block';
+                    }
+                });
+        }
+        
+        function loadTags() {
+            fetch('http://localhost:8000/articles/tags?limit=20')
+                .then(res => res.json())
+                .then(data => {
+                    const cloud = document.getElementById('tagCloud');
+                    if (data.tags && data.tags.length > 0) {
+                        cloud.innerHTML = data.tags.map(tag => 
+                            `<div class="tag" onclick="filterByTag('${tag.tag_name}')">${tag.tag_name} (${tag.article_count})</div>`
+                        ).join('');
+                    }
+                });
+        }
+        
+        function filterByTag(tagName) {
+            fetch(`http://localhost:8000/articles/tag/${encodeURIComponent(tagName)}`)
+                .then(res => res.json())
+                .then(data => {
+                    const grid = document.getElementById('articleGrid');
+                    const noArticles = document.getElementById('noArticles');
+                    
+                    if (data.results && data.results.length > 0) {
+                        grid.innerHTML = data.results.map(article => `
+                            <div class="article-card" onclick="openDetailModal(${article.id})">
+                                <div class="card-image">
+                                    <img src="${article.images ? JSON.parse(article.images)[0] : ''}" 
+                                         alt="${article.title}"
+                                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22280%22 height=%22200%22%3E%3Crect fill=%22%23667eea%22 width=%22280%22 height=%22200%22/%3E%3C/svg%3E'">
+                                </div>
+                                <div class="card-content">
+                                    <h3>${article.title}</h3>
+                                    <p>${article.description || article.full_text.substring(0, 100)}</p>
+                                    <div class="card-meta">
+                                        <span>${article.domain}</span>
+                                        <span>👁️ ${article.view_count} views</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('');
+                        noArticles.style.display = 'none';
+                    } else {
+                        grid.innerHTML = '';
+                        noArticles.textContent = 'No articles found for this tag.';
+                        noArticles.style.display = 'block';
+                    }
+                });
+            
+            switchTab('library');
+        }
+        
+        function loadAnalytics() {
+            fetch('http://localhost:8000/analytics')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('totalArticles').textContent = data.total_articles;
+                    
+                    const topDomainsHtml = data.top_domains.map(d => 
+                        `<li>${d.domain} <strong>${d.count}</strong></li>`
+                    ).join('');
+                    document.getElementById('topDomains').innerHTML = topDomainsHtml;
+                    
+                    const mostViewedHtml = data.most_viewed.map(a => 
+                        `<li>${a.title.substring(0, 25)}... <strong>${a.view_count}</strong></li>`
+                    ).join('');
+                    document.getElementById('mostViewed').innerHTML = mostViewedHtml;
+                    
+                    const topTagsHtml = data.top_tags.map(t => 
+                        `<li>${t.tag} <strong>${t.count}</strong></li>`
+                    ).join('');
+                    document.getElementById('topTags').innerHTML = topTagsHtml;
+                });
+        }
+        
+        function openDetailModal(articleId) {
+            fetch(`http://localhost:8000/articles/${articleId}`)
+                .then(res => res.json())
+                .then(article => {
+                    // Set basic info
+                    document.getElementById('modalTitle').textContent = article.title;
+                    document.getElementById('modalDescription').textContent = article.description;
+                    document.getElementById('modalDomain').textContent = article.domain;
+                    document.getElementById('modalViews').textContent = article.view_count;
+                    document.getElementById('modalUrl').href = article.url;
+                    document.getElementById('modalDate').textContent = new Date(article.saved_at).toLocaleDateString();
+                    
+                    // Set image (first from extracted images or placeholder)
+                    if (article.images) {
+                        const images = JSON.parse(article.images);
+                        if (images.length > 0) {
+                            document.getElementById('modalImage').src = images[0];
+                        }
+                    }
+                    
+                    // Set full text
+                    if (article.full_text) {
+                        document.getElementById('modalFullText').textContent = article.full_text;
+                        document.getElementById('textSection').style.display = 'block';
+                    } else {
+                        document.getElementById('textSection').style.display = 'none';
+                    }
+                    
+                    // Set key points
+                    if (article.key_points) {
+                        const points = JSON.parse(article.key_points);
+                        if (points.length > 0) {
+                            document.getElementById('modalKeyPoints').innerHTML = points.map(p => 
+                                `<li>${p}</li>`
+                            ).join('');
+                            document.getElementById('keyPointsSection').style.display = 'block';
+                        } else {
+                            document.getElementById('keyPointsSection').style.display = 'none';
+                        }
+                    } else {
+                        document.getElementById('keyPointsSection').style.display = 'none';
+                    }
+                    
+                    // Set images gallery
+                    if (article.images) {
+                        const images = JSON.parse(article.images);
+                        if (images.length > 0) {
+                            document.getElementById('modalImages').innerHTML = images.map(img => 
+                                `<img src="${img}" style="width: 100%; height: 200px; border-radius: 5px; object-fit: cover;" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%23ccc%22 width=%22200%22 height=%22200%22/%3E%3C/svg%3E'">`
+                            ).join('');
+                            document.getElementById('imagesSection').style.display = 'block';
+                        } else {
+                            document.getElementById('imagesSection').style.display = 'none';
+                        }
+                    } else {
+                        document.getElementById('imagesSection').style.display = 'none';
+                    }
+                    
+                    // Set links
+                    if (article.links) {
+                        const links = JSON.parse(article.links);
+                        if (links.length > 0) {
+                            document.getElementById('modalLinks').innerHTML = links.map(link => 
+                                `<li><a href="${link.url}" target="_blank">${link.text || link.url}</a></li>`
+                            ).join('');
+                            document.getElementById('linksSection').style.display = 'block';
+                        } else {
+                            document.getElementById('linksSection').style.display = 'none';
+                        }
+                    } else {
+                        document.getElementById('linksSection').style.display = 'none';
+                    }
+                    
+                    // Set keywords
+                    if (article.keywords) {
+                        const keywords = JSON.parse(article.keywords);
+                        if (keywords.length > 0) {
+                            document.getElementById('modalKeywords').innerHTML = keywords.map(k => 
+                                `<span>${k}</span>`
+                            ).join('');
+                            document.getElementById('keywordsSection').style.display = 'block';
+                        } else {
+                            document.getElementById('keywordsSection').style.display = 'none';
+                        }
+                    } else {
+                        document.getElementById('keywordsSection').style.display = 'none';
+                    }
+                    
+                    // Set tags (from article_tags relationship)
+                    if (article.tags) {
+                        if (article.tags.length > 0) {
+                            document.getElementById('modalTags').innerHTML = article.tags.map(tag => 
+                                `<div class="tag">${tag}</div>`
+                            ).join('');
+                            document.getElementById('tagsSection').style.display = 'block';
+                        } else {
+                            document.getElementById('tagsSection').style.display = 'none';
+                        }
+                    } else {
+                        document.getElementById('tagsSection').style.display = 'none';
+                    }
+                    
+                    // Show modal
+                    document.getElementById('detailModal').style.display = 'flex';
+                })
+                .catch(err => {
+                    console.error('Error loading article:', err);
+                    alert('Error loading article details');
+                });
+        }
+        
+        function closeDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        document.addEventListener('click', (e) => {
+            const modal = document.getElementById('detailModal');
+            if (e.target === modal) {
+                closeDetailModal();
+            }
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeDetailModal();
+            }
+        });
+    </script>
+</body>
+</html>
