@@ -2,6 +2,7 @@ import logging
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -35,11 +36,21 @@ async def lifespan(app: FastAPI):
         app.state.producer.close()
         logger.info("[+] Kafka producer closed")
 
-app = FastAPI(title="Distributed Web Scraper API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Career-Sniper: Distributed K8s Job Engine", version="2.0.0", lifespan=lifespan)
+
+# --- CORS: Allow all origins so the browser frontend can reach the API ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Apply rate limiting globally via middleware
+# Request logging middleware
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     logger.info(f"Incoming: {request.method} {request.url}")
